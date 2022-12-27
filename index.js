@@ -30,10 +30,12 @@ app.get('/hello/:id', (req, res) => {
 })
 
 
-app.get('/search', (req, res, next) => {
+app.get('/search', (req, res) => {
     const search = req.query
     res.status(200).send({status:200, message:"ok", data:search})       
 })
+
+
  
 
 // list for requests

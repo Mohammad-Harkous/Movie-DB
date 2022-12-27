@@ -8,21 +8,33 @@ const time = new Date();
 let hours = time.getHours();
 let minutes = time.getMinutes();
 
-let currentTime = `${hours}:${minutes}`
+let currentTime = `${hours}:${minutes}`;
 
 
 
-app.get('/', function(req, res){
+app.get('/', (req, res) => {
     res.send('ok')
 })
 
-app.get('/test', function(req, res){
+app.get('/test', (req, res) => {
     res.status(200).send({status:200, message:"ok"})
 })
 
-app.get('/time', function(req, res){
+app.get('/time', (req, res) => {
     res.status(200).send({status:200, message: currentTime})
 })
+
+app.get('/hello/:id', (req, res) => {
+    const id = req.params.id
+    res.status(200).send({status:200, message:`Hello, ${id}`})
+})
+
+
+app.get('/search', (req, res, next) => {
+    const search = req.query
+    res.status(200).send({status:200, message:"ok", data:search})       
+})
+ 
 
 // list for requests
 app.listen(3000);

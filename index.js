@@ -37,10 +37,10 @@ app.get('/search', (req, res) => {
 
 
 const movies = [
-    { title: 'Jaws', year: 1975, rating: 8 },
-    { title: 'Avatar', year: 2009, rating: 7.8 },
-    { title: 'Brazil', year: 1985, rating: 8 },
-    { title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
+    { id:1, title: 'Jaws', year: 1975, rating: 8 },
+    { id:2, title: 'Avatar', year: 2009, rating: 7.8 },
+    { id:3, title: 'Brazil', year: 1985, rating: 8 },
+    { id:4, title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
 ]
 
 
@@ -90,6 +90,20 @@ app.get('/movies/read/by-title', (req, res) => {
     res.status(200).send({status:200, data: title})
 })
 
+
+// Step 7 - READ ONE
+app.get('/movies/read/id/:id', (req,res) => {
+
+    const id = req.params.id
+    const found = movies.some(movie => movie.id === parseInt(id))
+
+    if (found) {
+      res.status(200).json(movies.filter(movie => movie.id === parseInt(id)))
+    }else{
+        res.status(404).json({status:404, error:true, message:'the movie of id ' + id + ' does not exist'})
+    }
+   
+})
 
 // list for requests
 app.listen(3000);

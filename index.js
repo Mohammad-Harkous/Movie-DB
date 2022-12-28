@@ -3,6 +3,9 @@ const express = require('express');
 // express app
 const app = express();
 
+// Middleware
+app.use(express.json());
+
 const time = new Date();
 
 let hours = time.getHours();
@@ -36,6 +39,7 @@ app.get('/search', (req, res) => {
 })
 
 
+// Step 5 - Set up the basis for CRUD
 const movies = [
     { id:1, title: 'Jaws', year: 1975, rating: 8 },
     { id:2, title: 'Avatar', year: 2009, rating: 7.8 },
@@ -44,7 +48,7 @@ const movies = [
 ]
 
 
-// step 5
+
 app.post('/movies/add', (req, res) => {
 
 })
@@ -103,6 +107,26 @@ app.get('/movies/read/id/:id', (req,res) => {
         res.status(404).json({status:404, error:true, message:'the movie of id ' + id + ' does not exist'})
     }
    
+})
+
+// Step 8 - CREATE
+app.post('/movies/create', (req, res) => {
+ const addMovie = {
+    id: req.body.id,
+    title: req.body.title,
+    year: req.body.year,
+    rating:req.body.rating
+ }
+
+ if(!addMovie.id || !addMovie.title || !addMovie.year || !Number.isInteger(addMovie.year) || addMovie.year <= 4 ) {
+    return res.status(403).send({status:403, error:true, message:'you cannot create a movie without providing a title and a year'})
+ }else if(addMovie.rating == null){
+    addMovie.rating = 4
+ }
+
+ movies.push(addMovie)
+
+ res.send("movie added successfully")
 })
 
 // list for requests

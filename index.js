@@ -43,6 +43,8 @@ const movies = [
     { title: 'الإرهاب والكباب', year: 1992, rating: 6.2 }
 ]
 
+
+// step 5
 app.post('/movies/add', (req, res) => {
 
 })
@@ -58,6 +60,36 @@ app.put('/movies/edit', (req, res) =>{
 app.delete('/movies/delete', (req, res) =>{
 
 })
+
+
+// step 6 - SEARCH
+app.get('/movies/read/by-date', (req, res) => {
+
+    const date =   movies.sort(function(a,b){
+        return new Date(b.year) - new Date(a.year);
+      });
+   
+    res.status(200).send({status:200, data:date})
+})
+
+app.get('/movies/read/by-rating', (req, res) => {
+    const rate =   movies.sort(function(a,b){
+        return (b.rating) - (a.rating);
+      });
+
+    res.status(200).send({status:200, data: rate})
+})
+
+app.get('/movies/read/by-title', (req, res) => {
+    const title = movies.sort(function(a, b) {
+        const titleA = a.title.toUpperCase();
+        const titleB = b.title.toUpperCase();
+        return (titleA < titleB) ? -1 : (titleA > titleB) ? 1 : 0;
+    });
+
+    res.status(200).send({status:200, data: title})
+})
+
 
 // list for requests
 app.listen(3000);

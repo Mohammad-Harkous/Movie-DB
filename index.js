@@ -129,5 +129,19 @@ app.post('/movies/create', (req, res) => {
  res.send("movie added successfully")
 })
 
+
+//Step 9 - DELETE
+app.delete('/movies/delete/:id', (req, res) => {
+    const id = req.params.id
+    const found = movies.some(movie => movie.id === parseInt(id))
+
+    if (found) {
+      res.status(200).json({ message: 'movie was deleted', movies:movies.filter(movie => movie.id !== parseInt(id))})
+    }else{
+        res.status(404).json({status:404, error:true, message:'the movie of id ' + id + ' does not exist'})
+    }
+})
+
+
 // list for requests
 app.listen(3000);

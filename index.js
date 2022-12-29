@@ -142,6 +142,27 @@ app.delete('/movies/delete/:id', (req, res) => {
     }
 })
 
+//Step 10 - UPDATE
+
+app.put('/movies/update/:id', (req, res) => {
+    const id = req.params.id
+    const found = movies.some(movie => movie.id === parseInt(id))
+
+    if (found) {
+        const updateMovie = req.body
+        movies.forEach(movie => {
+            if(movie.id === parseInt(id)){
+                movie.title = updateMovie.title ? updateMovie.title : updateMovie.title
+                movie.year = updateMovie.year ? updateMovie.year : updateMovie.year
+                movie.rating = updateMovie.rating ? updateMovie.rating : updateMovie.rating
+
+                res.json({message: 'movie update', movie: movie})
+            }
+        })
+    }else{
+        res.status(404).json({status:404, error:true, message:'the movie of id ' + id + ' does not exist'})
+    }
+})
 
 // list for requests
 app.listen(3000);

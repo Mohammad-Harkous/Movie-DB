@@ -1,4 +1,6 @@
 const express = require('express');
+const { ObjectId } = require('mongodb')
+const { connectToDb, getDb } = require('./db')
 
 // express app
 const app = express();
@@ -48,7 +50,7 @@ const movies = [
 ]
 
 
-
+/* note : I comment out the rest of steps to work with Step 12: Data Persistence
 app.post('/movies/add', (req, res) => {
 
 })
@@ -64,8 +66,9 @@ app.put('/movies/edit', (req, res) =>{
 app.delete('/movies/delete', (req, res) =>{
 
 })
+*/
 
-
+/*
 // step 6 - SEARCH
 app.get('/movies/read/by-date', (req, res) => {
 
@@ -262,7 +265,110 @@ app.put('/movies/update/:id', (req, res) => {
         res.status(404).json({status:404, error:true, message:'the movie of id ' + id + ' does not exist'})
     }
 })
+*/
+
+// Step 12: Data Persistence
+ 
+// db connection
+let db
+
+connectToDb((err) => {
+    if(!err) {
+    // listen for requests
+    app.listen(3000); 
+
+    db = getDb()
+    }
+})
+
+// post request to add new movie
+app.post('/movies/add', (req, res) => {
+    const addMovie = req.body
+
+        db.collection('movieDb')
+        .insertOne(addMovie)
+        .then(result => {
+          res.status(201).json(result)
+        })
+        .catch(() => {
+          res.status(500).json({err: 'Could not create a document'})
+        })
+   
+})
+
+// get request for geting all movies
+app.get('/movies/get', (req, res) => {
+    let movies = []
+
+    db.collection('movieDb')
+    .find()
+    .sort({ title: 1}) 
+    .forEach(movie => movies.push(movie))
+    .then(() => {
+        res.status(200).json(movies)
+    })
+    .catch(() => {
+        res.status(500).json({err: 'Could not fetch the documents'})
+    })
+})
+
+// get request to find a movie by its id
+app.get('/movies/get/:id', (req, res) => {
+
+    if(ObjectId.isValid(req.params.id)) {
+        db.collection('movieDb')
+        .findOne({_id: ObjectId(req.params.id)})
+        .then(doc => {
+            res.status(200).json(doc)
+        })
+        .catch(() => {
+            res.status(500).json({error: 'Could not fetch the document'})
+        })
+
+    }else{
+        res.status(500).json({error: 'Not a valid id'})
+    }
+})
 
 
-// list for requests
-app.listen(3000);
+// delete request for deleting a movie
+app.delete('/movies/delete/:id', (req, res) => {
+
+    if(ObjectId.isValid(req.params.id)) {
+        db.collection('movieDb')
+        .deleteOne({_id: ObjectId(req.params.id)})
+        .then(result => {
+            res.status(200).json(result)
+        })
+        .catch(() => {
+            res.status(500).json({error: 'Could not delete the document'})
+        })
+
+    }else{
+        res.status(500).json({error: 'Not a valid id'})
+    }
+})
+
+// update request to a update a data for existing movie
+app.patch('/movies/update/:id', (req, res) => {
+    const updateMovie = req.body
+
+    if(ObjectId.isValid(req.params.id)) {
+        db.collection('movieDb')
+        .updateOne({_id: ObjectId(req.params.id)}, {$set: updateMovie} )
+        .then(result => {
+            res.status(200).json(result)
+        })
+        .catch(() => {
+            res.status(500).json({error: 'Could not update the document'})
+        })
+
+    }else{
+        res.status(500).json({error: 'Not a valid id'})
+    }
+})
+
+
+
+
+

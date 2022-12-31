@@ -1,5 +1,5 @@
 # node modules
 node_modules
 
-# dbConnection string
+# dbConnection string and secert key for jwt 
 .env

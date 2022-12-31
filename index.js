@@ -1,7 +1,13 @@
 const express = require('express');
-const { ObjectId } = require('mongodb')
-const { connectToDb, getDb } = require('./db')
-const dotenv = require("dotenv")
+const { ObjectId } = require('mongodb');
+const { connectToDb, getDb } = require('./db');
+const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+const User = require('./model/User');
+const Movie = require('./model/Movie');
+const { requireAuth } = require('./middleware/authMiddleware');
+const dotenv = require("dotenv");
 
 // .env
 dotenv.config()
@@ -11,6 +17,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 
 const time = new Date();
 
@@ -269,13 +276,12 @@ app.put('/movies/update/:id', (req, res) => {
         res.status(404).json({status:404, error:true, message:'the movie of id ' + id + ' does not exist'})
     }
 })
-*/
+
 
 // Step 12: Data Persistence
  
 // db connection
 let db
-
 connectToDb((err) => {
     if(!err) {
     // listen for requests
@@ -284,6 +290,7 @@ connectToDb((err) => {
     db = getDb()
     }
 })
+
 
 // post request to add new movie
 app.post('/movies/add', (req, res) => {
@@ -370,6 +377,130 @@ app.patch('/movies/update/:id', (req, res) => {
     }else{
         res.status(500).json({error: 'Not a valid id'})
     }
+})
+*/
+
+// Step 13: Authentication 
+// db connection
+mongoose.set("strictQuery", false);
+mongoose.connect(process.env.MONGOLAB_URI)
+    .then((result) => app.listen(3000))
+    .catch((err) => console.log(err))
+
+
+// This function for creating a Token
+// The token maxAge is for one day
+const maxAge = 1 * 24 * 60 * 60; 
+const  createToken = (id) => {
+    return jwt.sign({ id }, process.env.APP_SECRET, {
+        expiresIn: maxAge
+    });
+}
+
+// post request to signup a user
+app.post('/users/signup', async(req, res) =>{
+    const { email, password} = req.body
+
+    try{
+      const user = await User.create({ email, password});
+      const token = createToken(user._id);
+      res.cookie('jwt', token, { httpOnly:true, maxAge: maxAge * 1000});
+      res.status(201).json({user: user._id});
+      console.log(token);
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).json({error: 'user not created, please enter a valid email'}); 
+    }
+
+})
+
+// post request to login the user
+app.post('/users/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try{
+        const user = await User.login(email, password);
+        const token = createToken(user._id);
+        res.cookie('jwt', token, { httpOnly:true, maxAge: maxAge * 1000});
+        res.status(200).json({user: user._id});
+        console.log(token)
+    }
+    catch {
+        res.status(400).json({message: 'email or password is incorrect'})
+    }
+})
+
+// get request to logout the user
+app.get('/users/logout', (req, res) => {
+    res.cookie('jwt', '', { maxAge: 1})
+    res.status(200).json({message: 'user logged out'})
+})
+
+// post request to add new movie
+app.post('/movies/add', requireAuth, async(req, res) => {
+    const { title, year, rating} = req.body
+
+    try{
+        const movie = await Movie.create({ title, year, rating});
+        res.status(201).json(movie);
+      }
+      catch (err) {
+          console.log(err);
+          res.status(400).send('Could not create a document'); 
+      }      
+})
+
+// note before doing any request first you have to signup and then login, do not forget to logout
+// get request for getting all movies
+app.get('/movies/get', requireAuth, async(req, res) => {
+    
+    try{
+        const movies = await Movie.find();
+        res.status(200).json(movies)
+    }
+    catch{
+        res.status(400).send('Could not fetch movies');
+    }
+})
+
+// get request for getting a movie by its id
+app.get('/movies/get/:id', requireAuth, async(req, res) => {
+    const { id } = req.params;
+
+    try{
+        const movie = await Movie.findById(id);
+        res.status(200).json(movie)
+    }
+    catch{
+        res.status(400).send('Could not fetch a movie');
+    }
+})
+
+// delete request for deleting a movie
+app.delete("/movies/delete/:id", requireAuth, async (req, res) => {
+    const { id } = req.params;
+    try{
+    const deletedMovie = await Movie.findByIdAndDelete(id);
+    return res.status(200).json({message: 'The movie deleted'});
+    }
+    catch{
+        res.status(500).json({error: 'Could not delete a movie'})
+    }
+  });
+
+// patch request for updating a movie by its id
+app.patch('/movies/edit/:id', requireAuth, async(req, res) => {
+
+   try{
+        const movie = await Movie.findById(req.params.id);
+        Object.assign(movie, req.body);
+        movie.save();
+        res.status(201).json({data : movie,message: 'movie updated'})
+   }
+   catch{
+    res.status(500).json({message: 'movie could not update'})
+   } 
 })
 
 
